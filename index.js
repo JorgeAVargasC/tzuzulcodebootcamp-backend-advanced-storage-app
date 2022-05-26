@@ -1,13 +1,20 @@
-const express = require('express');
+const express = require("express")
+const { port } = require("./config")
 
-const app = express();
+// Importacion de rutas
+const files = require("./routes/files")
 
-app.get('/', (req, res) => {
+const app = express()
+
+// uso de rutas
+files(app)
+
+app.get("/", (req, res) => {
     return res.json({
-        message: "Hola Mundo"
+        message: "Hola mundo"
     })
-});
+})
 
-app.listen(4000,() => {
-    console.log('Listening on: http://localhost:'+4000);
+app.listen(port, () => {
+    console.log("Listening on: http://localhost:" + port)
 })
