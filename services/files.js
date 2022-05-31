@@ -1,27 +1,31 @@
-const { uploadFiles } = require("../libs/storage")
-const { PrismaClient } = require("@prisma/client")
 
-const client = new PrismaClient()
+const client = require("../libs/db")
 
-class Files {
-    async uploadMany(files) {
-        const results = await uploadFiles(files)
+class Users{
+    async getAll(){
+        const users = await client.user.findMany()
 
-        results.forEach(async (file) => {
-            if (file.value.success) {
-                const result = await client.file.create({
-                    data: {
-                        originalName: file.value.originalName,
-                        name: file.value.fileName
-                    }
-                })
-                // Agregar el dueño
+        return users
+    }
 
-                console.log(result)
-            }
+    async create(data){
+        try {
+            const user = await client.user.create({
+                data:{
+                    name:data.name,
+                    email:data.email,
+                    password:data.password,
+                    active:true
+                }
+            })
+    
+            return user
+        } catch (error) {
+            console.log(error)
 
-        })
+            return {error}
+        }
     }
 }
 
-module.exports = Files
+module.exports = Users

@@ -2,22 +2,18 @@ const express = require("express")
 const FilesService = require("../services/files")
 const upload = require("../middleware/uploadFile")// Middleware de carga de archivos
 
-function files(app) {
+function files(app){
     const router = express.Router()
+    const filesServ = new FilesService()
 
-    app.use("/api/files", router)
+    app.use("/api/files",router)
 
 
-    router.post("/upload", upload.array("files"), async (req, res) => {
+    router.post("/upload",upload.array("files"),async (req,res)=>{
+        
+        const results = await filesServ.uploadMany(req.files,req.body.id)
 
-        const results = await uploadFiles(req.files)
-
-        console.log(results)
-
-        return res.json({
-            success: true,
-            message: "Upload successful"
-        })
+        return res.json(results)
     })
 }
 
