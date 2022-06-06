@@ -1,31 +1,101 @@
+const {uploadFiles,deleteFile, downloadFile} = require("../libs/storage")
+const {PrismaClient} = require("@prisma/client")
 
-const client = require("../libs/db")
+const client = new PrismaClient()
 
-class Users{
+class Files{
+
     async getAll(){
-        const users = await client.user.findMany()
+        const files = await client.file.findMany()
 
-        return users
+        return files
     }
 
-    async create(data){
-        try {
-            const user = await client.user.create({
-                data:{
-                    name:data.name,
-                    email:data.email,
-                    password:data.password,
-                    active:true
-                }
-            })
-    
-            return user
-        } catch (error) {
-            console.log(error)
+    async get(fileName,res){
+        const file = await client.file.findUnique({
+            where:{
+                name:fileName
+            }
+        })
 
-            return {error}
+        if(file){
+            return await downloadFile(fileName,res)
         }
+
+
+        return {
+            success:false,
+            message:"File not found"
+        }
+    }
+
+    async uploadMany(files,idUser){
+        const results = await uploadFiles(files)
+
+        const uploadedFiles = results.map(async (file)=>{
+            if(file.value.success){
+                const result = await client.file.create({
+                    data:{
+                        originalName:file.value.originalName,
+                        name:file.value.fileName,
+                        // ownerId:idUser
+                        owner:{
+                            connect:{
+                                id: Number.parseInt(idUser)
+                            }
+                        }
+                    }
+                })
+                
+                return {
+                    success:true,
+                    file:result
+                }
+            }else{
+                return{
+                    success:false,
+                    message:"An error ocurred"
+                }
+            }
+
+        })
+
+        return await (await Promise.allSettled(uploadedFiles)).map(result=>result.value)
+    }
+
+
+    async deleteMany(files){
+        const resultPromises = files.map(async (file)=>{
+            const result = await deleteFile(file)
+            if(result.success){
+                try {
+                    const deletedFile = await client.file.delete({
+                        where:{
+                            name:result.fileName
+                        }
+                    })
+    
+                    return {
+                        success:true,
+                        file:deletedFile
+                    }
+                } catch (error) {
+                    return {
+                        success:false,
+                        message: "File deleted. DB error"
+                    }
+                }
+            }else{
+                return result
+            }
+        })
+
+        return await (await Promise.allSettled(resultPromises)).map(result=>{
+            console.log(result)
+            
+            return result.value
+        })
     }
 }
 
-module.exports = Users
+module.exports = Files

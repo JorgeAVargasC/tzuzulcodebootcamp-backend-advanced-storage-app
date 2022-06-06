@@ -4,8 +4,8 @@ CREATE TABLE `User` (
     `name` VARCHAR(100) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
+    `active` BOOLEAN NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `active` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`id`)
